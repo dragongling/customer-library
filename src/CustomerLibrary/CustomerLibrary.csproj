@@ -5,4 +5,8 @@
     <nullable>enable</nullable> 
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="FluentValidation" Version="10.3.4" />
+  </ItemGroup>
+
 </Project>
