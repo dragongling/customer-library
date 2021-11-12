@@ -1,39 +1,21 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using FluentValidation;
+using System;
 using System.Linq;
 
 namespace CustomerLibrary
 {
-    public class AddressValidator : IValidator<Address>
+    public class AddressValidator : AbstractValidator<Address>
     {
-        static readonly Dictionary<string, int> MaxFieldLengths = new()
-        {
-            { "Line", 100 },
-            { "Line2", 100 },
-            { "City", 50 },
-            { "PostalCode", 6 },
-            { "State", 20 }
-        };
-
         static readonly string[] AcceptableCountries = new string[] { "United States", "Canada" };
 
-        public string[] Validate(Address address)
+        public AddressValidator()
         {
-            var errorList = new List<string>();            
-            foreach(var propertyName in MaxFieldLengths.Keys)
-            {
-                string? propertyValue = (string?) address.GetType()?.GetProperty(propertyName)?.GetValue(address);
-                int maxLength = MaxFieldLengths[propertyName];
-                if (propertyValue != null && propertyValue.Length > maxLength)
-                {
-                    errorList.Add($"{propertyName} length should not exceed {maxLength}");
-                }
-            }
-            if (!AcceptableCountries.Contains(address.Country))
-            {
-                errorList.Add("This country is not supported");
-            }
-            return errorList.ToArray();
+            RuleFor(x => x.Line).Length(4, 100);
+            RuleFor(x => x.Line2).Length(4, 100);
+            RuleFor(x => x.City).Length(2, 50);
+            RuleFor(x => x.PostalCode).Length(5, 6);
+            RuleFor(x => x.State).Length(2, 20);
+            RuleFor(x => x.Country).Must(c => AcceptableCountries.Contains(c)).WithMessage("This country is not supported.");
         }
     }
 }

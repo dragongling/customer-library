@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Linq;
+using Xunit;
 
 namespace CustomerLibrary.Tests
 {
@@ -8,7 +9,7 @@ namespace CustomerLibrary.Tests
         public void ShouldValidateFieldLengths()
         {
             var validator = new AddressValidator();
-            string[] errors = validator.Validate(new Address(
+            var results = validator.Validate(new Address(
                 new string('l', 100),
                 new string('l', 100),
                 Type.Billing,
@@ -17,29 +18,59 @@ namespace CustomerLibrary.Tests
                 new string('c', 20),
                 "United States"
                 ));
-            Assert.True(errors.Length == 0);
 
-            errors = validator.Validate(new Address(
+            Assert.True(results.IsValid);
+
+            results = validator.Validate(new Address(
                 new string('l', 101),
                 new string('l', 101),
                 Type.Shipping,
                 new string('c', 51),
                 "7777777",
                 new string('s', 21),
-                "Kazakhstan"
+                "Canada"
                 ));
 
+            string[] errors = results.Errors.Select(e => e.ErrorMessage).ToArray();
             string[] expectedErrors = new string[]
             {
-                "Line length should not exceed 100",
-                "Line2 length should not exceed 100",
-                "City length should not exceed 50",
-                "PostalCode length should not exceed 6",
-                "State length should not exceed 20",
-                "This country is not supported"
+                "'Line' must be between 4 and 100 characters. You entered 101 characters.",
+                "'Line2' must be between 4 and 100 characters. You entered 101 characters.",
+                "'City' must be between 2 and 50 characters. You entered 51 characters.",
+                "'Postal Code' must be between 5 and 6 characters. You entered 7 characters.",
+                "'State' must be between 2 and 20 characters. You entered 21 characters."
             };
 
             Assert.Equal(expectedErrors, errors);
+        }
+
+        [Fact]
+        public void ShouldValidateCountry()
+        {
+            var validator = new AddressValidator();
+            var results = validator.Validate(new Address(
+                new string('l', 100),
+                new string('l', 100),
+                Type.Billing,
+                new string('c', 50),
+                "123456",
+                new string('c', 20),
+                "United States"
+                ));
+            Assert.True(results.IsValid);
+
+            results = validator.Validate(new Address(
+                new string('l', 100),
+                new string('l', 100),
+                Type.Billing,
+                new string('c', 50),
+                "123456",
+                new string('c', 20),
+                "Kazakhstan"
+                ));
+
+            Assert.Single(results.Errors);
+            Assert.Equal("This country is not supported.", results.Errors[0].ErrorMessage);
         }
     }
 }
