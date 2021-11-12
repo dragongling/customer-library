@@ -1,4 +1,5 @@
-﻿using Xunit;
+﻿using System.Linq;
+using Xunit;
 
 namespace CustomerLibrary.Tests
 {
@@ -31,15 +32,15 @@ namespace CustomerLibrary.Tests
         {
             validator = new CustomerValidator();
 
-            string[] errors = validator.Validate(new Customer(
+            var results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 addresses,
                 notes
                 ));
-            Assert.True(errors.Length == 0);
+            Assert.True(results.IsValid);
 
-            errors = validator.Validate(new Customer(
+            results = validator.Validate(new Customer(
                 new string('l', 51),
                 new string('f', 51),
                 addresses,
@@ -47,10 +48,10 @@ namespace CustomerLibrary.Tests
                 ));
             string[] expectedErrors = new string[]
             {
-                "LastName length should not exceed 50",
-                "FirstName length should not exceed 50"
+                "'Last Name' must be between 2 and 50 characters. You entered 51 characters.",
+                "'First Name' must be between 2 and 50 characters. You entered 51 characters."
             };
-            Assert.Equal(expectedErrors, errors);
+            Assert.Equal(expectedErrors, results.Errors.Select(e => e.ErrorMessage).ToArray());
         }
 
         [Fact]
@@ -58,27 +59,23 @@ namespace CustomerLibrary.Tests
         {
             validator = new CustomerValidator();
 
-            string[] errors = validator.Validate(new Customer(
+            var results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 addresses,
                 notes,
                 "88005553535"
                 ));
-            Assert.True(errors.Length == 0);
+            Assert.True(results.IsValid);
 
-            errors = validator.Validate(new Customer(
+            results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 addresses,
                 notes,
                 "Invalid phone"
                 ));
-            string[] expectedErrors = new string[]
-            {
-                "Invalid phone number"
-            };
-            Assert.Equal(expectedErrors, errors);
+            Assert.Equal("'Phone' is not in the correct format.", results.Errors[0].ErrorMessage);
         }
 
         [Fact]
@@ -86,7 +83,7 @@ namespace CustomerLibrary.Tests
         {
             validator = new CustomerValidator();
 
-            string[] errors = validator.Validate(new Customer(
+            var results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 addresses,
@@ -94,9 +91,9 @@ namespace CustomerLibrary.Tests
                 null,
                 "mail@example.com"
                 ));
-            Assert.True(errors.Length == 0);
+            Assert.True(results.IsValid);
 
-            errors = validator.Validate(new Customer(
+            results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 addresses,
@@ -104,11 +101,7 @@ namespace CustomerLibrary.Tests
                 null,
                 "Invalid email"
                 ));
-            string[] expectedErrors = new string[]
-            {
-                "Invalid email format"
-            };
-            Assert.Equal(expectedErrors, errors);
+            Assert.Equal("'Email' is not a valid email address.", results.Errors[0].ErrorMessage);
         }
 
         [Fact]
@@ -116,7 +109,7 @@ namespace CustomerLibrary.Tests
         {
             validator = new CustomerValidator();
 
-            string[] errors = validator.Validate(new Customer(
+            var results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 addresses,
@@ -125,7 +118,7 @@ namespace CustomerLibrary.Tests
                 null,
                 null
                 ));
-            Assert.True(errors.Length == 0);
+            Assert.True(results.IsValid);
         }
 
         [Fact]
@@ -133,17 +126,13 @@ namespace CustomerLibrary.Tests
         {
             validator = new CustomerValidator();
 
-            string[] errors = validator.Validate(new Customer(
+            var results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 new Address[] { },
                 notes
                 ));
-            string[] expectedErrors = new string[]
-            {
-                "At least one address is required"
-            };
-            Assert.Equal(expectedErrors, errors);
+            Assert.Equal("'Addresses' must not be empty.", results.Errors[0].ErrorMessage);
         }
 
         [Fact]
@@ -151,17 +140,13 @@ namespace CustomerLibrary.Tests
         {
             validator = new CustomerValidator();
 
-            string[] errors = validator.Validate(new Customer(
+            var results = validator.Validate(new Customer(
                 new string('l', 50),
                 new string('f', 50),
                 addresses,
                 new string[] { }
                 ));
-            string[] expectedErrors = new string[]
-            {
-                "At least one note is required"
-            };
-            Assert.Equal(expectedErrors, errors);
+            Assert.Equal("'Notes' must not be empty.", results.Errors[0].ErrorMessage);
         }
     }
 }
